@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoTune Studio</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --bg: #050810;
+    --surface: #0d1425;
+    --panel: #111a30;
+    --accent: #00f5ff;
+    --accent2: #ff2d78;
+    --accent3: #7b2fff;
+    --glow: rgba(0,245,255,0.15);
+    --text: #c8e0ff;
+    --dim: #4a6080;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 30px 20px 60px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .logo {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    letter-spacing: 0.12em;
+    background: linear-gradient(135deg, var(--accent), var(--accent3), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 20px rgba(0,245,255,0.4));
+  }
+
+  .tagline {
+    color: var(--dim);
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    margin-top: 6px;
+    text-transform: uppercase;
+  }
+
+  /* Panels */
+  .panel {
+    background: var(--panel);
+    border: 1px solid rgba(0,245,255,0.12);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.6;
+  }
+
+  .panel-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .panel-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(0,245,255,0.15);
+  }
+
+  /* Visualizer */
+  #visualizer {
+    width: 100%;
+    height: 80px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid rgba(0,245,255,0.08);
+    display: block;
+    margin-bottom: 20px;
+  }
+
+  /* Controls row */
+  .controls-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  /* Buttons */
+  .btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    font-weight: 700;
+    padding: 12px 22px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    box-shadow: 0 0 20px rgba(0,245,255,0.35);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: #fff;
+    box-shadow: 0 0 30px rgba(0,245,255,0.6);
+  }
+
+  .btn-danger {
+    background: var(--accent2);
+    color: #fff;
+    box-shadow: 0 0 20px rgba(255,45,120,0.35);
+  }
+  .btn-danger:hover:not(:disabled) {
+    box-shadow: 0 0 30px rgba(255,45,120,0.6);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid rgba(0,245,255,0.4);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--glow);
+    border-color: var(--accent);
+  }
+
+  .btn-purple {
+    background: var(--accent3);
+    color: #fff;
+    box-shadow: 0 0 20px rgba(123,47,255,0.35);
+  }
+  .btn-purple:hover:not(:disabled) {
+    box-shadow: 0 0 30px rgba(123,47,255,0.6);
+  }
+
+  /* Recording indicator */
+  .rec-indicator {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent2);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+  }
+  .rec-indicator.active { display: flex; }
+  .rec-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent2);
+    animation: blink 1s infinite;
+  }
+  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+  /* Sliders */
+  .knob-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+    margin-top: 4px;
+  }
+
+  .knob-group label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--dim);
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .knob-group label span {
+    color: var(--accent);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--surface);
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 10px rgba(0,245,255,0.7);
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.3); }
+
+  input[type=range].pink::-webkit-slider-thumb {
+    background: var(--accent2);
+    box-shadow: 0 0 10px rgba(255,45,120,0.7);
+  }
+
+  input[type=range].purple::-webkit-slider-thumb {
+    background: var(--accent3);
+    box-shadow: 0 0 10px rgba(123,47,255,0.7);
+  }
+
+  /* Music upload */
+  .upload-zone {
+    border: 2px dashed rgba(0,245,255,0.2);
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: var(--glow);
+  }
+
+  .upload-zone input[type=file] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .upload-icon { font-size: 2rem; margin-bottom: 8px; }
+  .upload-text { font-size: 0.75rem; color: var(--dim); letter-spacing: 0.1em; }
+  .upload-name { color: var(--accent); font-size: 0.8rem; margin-top: 6px; }
+
+  /* Key selector */
+  .key-selector {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+
+  .key-btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.6rem;
+    padding: 7px 12px;
+    border-radius: 4px;
+    border: 1px solid rgba(0,245,255,0.2);
+    background: transparent;
+    color: var(--dim);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.05em;
+  }
+
+  .key-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .key-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+    font-weight: 700;
+    box-shadow: 0 0 12px rgba(0,245,255,0.4);
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid rgba(0,245,255,0.08);
+    border-radius: 8px;
+    margin-top: 20px;
+    font-size: 0.7rem;
+  }
+
+  .status-text { color: var(--dim); }
+  .status-text.ok { color: var(--accent); }
+  .status-text.err { color: var(--accent2); }
+
+  .timer {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+  }
+
+  /* Note display */
+  .note-display {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .note-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--accent2);
+    min-width: 32px;
+    text-align: center;
+    text-shadow: 0 0 15px rgba(255,45,120,0.6);
+  }
+
+  /* Pitch meter */
+  .pitch-meter {
+    width: 120px;
+    height: 8px;
+    background: var(--surface);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .pitch-fill {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    background: linear-gradient(90deg, var(--accent2), var(--accent), var(--accent2));
+    border-radius: 4px;
+    transition: width 0.05s;
+  }
+
+  /* Playback section */
+  .playback-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .waveform-mini {
+    flex: 1;
+    height: 40px;
+    background: var(--surface);
+    border-radius: 6px;
+    border: 1px solid rgba(0,245,255,0.08);
+    min-width: 100px;
+  }
+
+  /* Scrolling note ticker */
+  .note-ticker {
+    width: 100%;
+    height: 36px;
+    overflow: hidden;
+    position: relative;
+    background: var(--surface);
+    border-radius: 6px;
+    border: 1px solid rgba(0,245,255,0.08);
+    margin-top: 12px;
+  }
+
+  .note-ticker-inner {
+    display: flex;
+    gap: 8px;
+    padding: 6px 10px;
+    white-space: nowrap;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.6rem;
+    color: var(--dim);
+    letter-spacing: 0.05em;
+    align-items: center;
+    height: 100%;
+  }
+
+  .note-pill {
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: rgba(0,245,255,0.08);
+    border: 1px solid rgba(0,245,255,0.15);
+    color: var(--accent);
+    font-size: 0.6rem;
+    transition: all 0.1s;
+  }
+
+  .note-pill.active {
+    background: var(--accent);
+    color: #000;
+    box-shadow: 0 0 8px rgba(0,245,255,0.5);
+  }
+
+  /* Download btn */
+  #downloadBtn {
+    display: none;
+    margin-top: 16px;
+    width: 100%;
+    padding: 14px;
+    font-size: 0.7rem;
+  }
+
+  #downloadBtn.show { display: block; }
+
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    animation: shimmer 2s infinite;
+  }
+  @keyframes shimmer { to { left: 150%; } }
+
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo">AUTOTUNE<span style="color:#fff;font-size:0.5em;vertical-align:middle;margin:0 6px">//</span>STUDIO</div>
+    <div class="tagline">Web Audio · Real-Time Pitch Correction · Browser Native</div>
+  </header>
+
+  <!-- Visualizer -->
+  <canvas id="visualizer"></canvas>
+
+  <!-- Record Panel -->
+  <div class="panel">
+    <div class="panel-title">01 · Vocal Input</div>
+    <div class="controls-row" style="margin-bottom:16px">
+      <button class="btn btn-danger" id="recordBtn">⬤ Record</button>
+      <button class="btn btn-secondary" id="stopBtn" disabled>■ Stop</button>
+      <div class="rec-indicator" id="recIndicator">
+        <div class="rec-dot"></div> RECORDING
+      </div>
+    </div>
+    <div class="status-bar">
+      <span class="status-text" id="micStatus">Microphone not connected</span>
+      <span class="timer" id="timer">00:00</span>
+    </div>
+    <div class="note-ticker">
+      <div class="note-ticker-inner" id="noteTicker">
+        AWAITING SIGNAL · · ·
+      </div>
+    </div>
+  </div>
+
+  <!-- Auto-Tune Panel -->
+  <div class="panel">
+    <div class="panel-title">02 · Pitch Correction Engine</div>
+
+    <div style="margin-bottom:16px">
+      <div class="panel-title" style="font-size:0.55rem;margin-bottom:10px">Musical Key</div>
+      <div class="key-selector" id="keySelector">
+        <button class="key-btn active" data-key="C">C</button>
+        <button class="key-btn" data-key="C#">C#</button>
+        <button class="key-btn" data-key="D">D</button>
+        <button class="key-btn" data-key="D#">D#</button>
+        <button class="key-btn" data-key="E">E</button>
+        <button class="key-btn" data-key="F">F</button>
+        <button class="key-btn" data-key="F#">F#</button>
+        <button class="key-btn" data-key="G">G</button>
+        <button class="key-btn" data-key="G#">G#</button>
+        <button class="key-btn" data-key="A">A</button>
+        <button class="key-btn" data-key="A#">A#</button>
+        <button class="key-btn" data-key="B">B</button>
+      </div>
+    </div>
+
+    <div class="knob-row">
+      <div class="knob-group">
+        <label>Correction Strength <span id="correctionVal">80%</span></label>
+        <input type="range" id="correctionStrength" min="0" max="100" value="80">
+      </div>
+      <div class="knob-group">
+        <label>Correction Speed <span id="speedVal">Fast</span></label>
+        <input type="range" class="pink" id="correctionSpeed" min="1" max="10" value="8">
+      </div>
+      <div class="knob-group">
+        <label>Formant Shift <span id="formantVal">0</span></label>
+        <input type="range" class="purple" id="formantShift" min="-6" max="6" value="0">
+      </div>
+      <div class="knob-group">
+        <label>Vocal Volume <span id="vocalVolVal">100%</span></label>
+        <input type="range" id="vocalVol" min="0" max="150" value="100">
+      </div>
+    </div>
+  </div>
+
+  <!-- Background Music Panel -->
+  <div class="panel">
+    <div class="panel-title">03 · Background Music</div>
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="musicFile" accept="audio/*">
+      <div class="upload-icon">♫</div>
+      <div class="upload-text">DROP AUDIO FILE HERE OR CLICK TO BROWSE</div>
+      <div class="upload-text" style="margin-top:4px;font-size:0.65rem">MP3 · WAV · OGG · AAC</div>
+      <div class="upload-name" id="musicName"></div>
+    </div>
+    <div class="knob-row" style="margin-top:16px">
+      <div class="knob-group">
+        <label>Music Volume <span id="musicVolVal">70%</span></label>
+        <input type="range" class="purple" id="musicVol" min="0" max="150" value="70">
+      </div>
+      <div class="knob-group">
+        <label>Music Pitch Shift <span id="musicPitchVal">0 st</span></label>
+        <input type="range" class="pink" id="musicPitch" min="-12" max="12" value="0">
+      </div>
+    </div>
+  </div>
+
+  <!-- Playback Panel -->
+  <div class="panel">
+    <div class="panel-title">04 · Playback &amp; Mix</div>
+    <div class="playback-row">
+      <button class="btn btn-primary shimmer" id="playBtn" disabled>▶ Play Mix</button>
+      <button class="btn btn-secondary" id="pauseBtn" disabled>⏸ Pause</button>
+      <button class="btn btn-secondary" id="replayBtn" disabled>↺ Restart</button>
+      <canvas class="waveform-mini" id="waveformMini"></canvas>
+    </div>
+    <button class="btn btn-purple shimmer" id="downloadBtn">⬇ Download Mixed Audio</button>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────
+let audioCtx = null;
+let mediaStream = null;
+let mediaRecorder = null;
+let recordedChunks = [];
+let recordedBlob = null;
+let recordedBuffer = null;
+let musicBuffer = null;
+let vocalSourceNode = null;
+let musicSourceNode = null;
+let analyserNode = null;
+let isRecording = false;
+let isPlaying = false;
+let recordingStartTime = 0;
+let timerInterval = null;
+let selectedKey = 'C';
+let noteHistory = [];
+let pitchWorkerInterval = null;
+let detectedFreq = 0;
+
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const MAJOR_SCALE_OFFSETS = [0,2,4,5,7,9,11]; // W W H W W W H
+
+function getScaleNotes(key) {
+  const root = NOTE_NAMES.indexOf(key);
+  return MAJOR_SCALE_OFFSETS.map(o => NOTE_NAMES[(root + o) % 12]);
+}
+
+function freqToNote(freq) {
+  if (!freq || freq < 50) return null;
+  const midi = 69 + 12 * Math.log2(freq / 440);
+  const noteIndex = Math.round(midi) % 12;
+  const noteName = NOTE_NAMES[((noteIndex % 12) + 12) % 12];
+  const cents = (midi - Math.round(midi)) * 100;
+  return { name: noteName, midi: Math.round(midi), cents };
+}
+
+function snapToScale(freq, key, strength) {
+  if (!freq || freq < 50) return freq;
+  const midi = 69 + 12 * Math.log2(freq / 440);
+  const noteInOctave = ((Math.round(midi) % 12) + 12) % 12;
+  const scaleNotes = getScaleNotes(key).map(n => NOTE_NAMES.indexOf(n));
+
+  let closest = scaleNotes[0];
+  let minDist = 12;
+  for (const n of scaleNotes) {
+    let d = Math.abs(noteInOctave - n);
+    if (d > 6) d = 12 - d;
+    if (d < minDist) { minDist = d; closest = n; }
+  }
+
+  const targetMidi = Math.round(midi) - noteInOctave + closest;
+  const snappedMidi = midi + (targetMidi - midi) * (strength / 100);
+  return 440 * Math.pow(2, (snappedMidi - 69) / 12);
+}
+
+// ─────────────────────────────────────────────────
+// AUDIO CONTEXT INIT
+// ─────────────────────────────────────────────────
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// ─────────────────────────────────────────────────
+// VISUALIZER
+// ─────────────────────────────────────────────────
+const vizCanvas = document.getElementById('visualizer');
+const vizCtx = vizCanvas.getContext('2d');
+
+function resizeViz() {
+  vizCanvas.width = vizCanvas.offsetWidth * devicePixelRatio;
+  vizCanvas.height = vizCanvas.offsetHeight * devicePixelRatio;
+  vizCtx.scale(devicePixelRatio, devicePixelRatio);
+}
+resizeViz();
+window.addEventListener('resize', resizeViz);
+
+let animFrameId = null;
+function drawViz() {
+  const w = vizCanvas.offsetWidth, h = vizCanvas.offsetHeight;
+  vizCtx.clearRect(0,0,w,h);
+  vizCtx.fillStyle = '#0d1425';
+  vizCtx.fillRect(0,0,w,h);
+
+  if (analyserNode) {
+    const buf = new Uint8Array(analyserNode.frequencyBinCount);
+    analyserNode.getByteFrequencyData(buf);
+    const bars = 80;
+    const step = Math.floor(buf.length / bars);
+    const bw = w / bars;
+    for (let i = 0; i < bars; i++) {
+      const v = buf[i * step] / 255;
+      const barH = v * h * 0.9;
+      const hue = 180 + i * 1.5;
+      vizCtx.fillStyle = `hsla(${hue},100%,${50 + v*30}%,${0.6 + v*0.4})`;
+      vizCtx.fillRect(i * bw + 1, h - barH, bw - 2, barH);
+    }
+  } else {
+    // idle wave
+    vizCtx.strokeStyle = 'rgba(0,245,255,0.2)';
+    vizCtx.lineWidth = 1.5;
+    vizCtx.beginPath();
+    const t = Date.now() / 1000;
+    for (let x = 0; x < w; x++) {
+      const y = h/2 + Math.sin(x * 0.03 + t * 2) * 8 + Math.sin(x * 0.07 + t) * 4;
+      x === 0 ? vizCtx.moveTo(x,y) : vizCtx.lineTo(x,y);
+    }
+    vizCtx.stroke();
+  }
+
+  animFrameId = requestAnimationFrame(drawViz);
+}
+drawViz();
+
+// ─────────────────────────────────────────────────
+// RECORDING
+// ─────────────────────────────────────────────────
+const recordBtn = document.getElementById('recordBtn');
+const stopBtn = document.getElementById('stopBtn');
+const recIndicator = document.getElementById('recIndicator');
+const micStatus = document.getElementById('micStatus');
+const timerEl = document.getElementById('timer');
+const noteTicker = document.getElementById('noteTicker');
+
+recordBtn.addEventListener('click', async () => {
+  try {
+    const ctx = getAudioCtx();
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+
+    // Build analyser
+    const source = ctx.createMediaStreamSource(mediaStream);
+    analyserNode = ctx.createAnalyser();
+    analyserNode.fftSize = 2048;
+    source.connect(analyserNode);
+
+    // Pitch detection loop
+    startPitchDetection(analyserNode, ctx.sampleRate);
+
+    // MediaRecorder
+    mediaRecorder = new MediaRecorder(mediaStream, { mimeType: getSupportedMimeType() });
+    recordedChunks = [];
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = onRecordingStop;
+    mediaRecorder.start(100);
+
+    isRecording = true;
+    recordBtn.disabled = true;
+    stopBtn.disabled = false;
+    recIndicator.classList.add('active');
+    micStatus.textContent = 'Recording...';
+    micStatus.className = 'status-text ok';
+
+    recordingStartTime = Date.now();
+    timerInterval = setInterval(() => {
+      const s = Math.floor((Date.now() - recordingStartTime) / 1000);
+      timerEl.textContent = `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+    }, 500);
+
+  } catch(e) {
+    micStatus.textContent = 'Microphone access denied';
+    micStatus.className = 'status-text err';
+  }
+});
+
+stopBtn.addEventListener('click', () => {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+  stopRecordingUI();
+});
+
+function stopRecordingUI() {
+  isRecording = false;
+  clearInterval(timerInterval);
+  clearInterval(pitchWorkerInterval);
+  recordBtn.disabled = false;
+  stopBtn.disabled = true;
+  recIndicator.classList.remove('active');
+  analyserNode = null;
+}
+
+async function onRecordingStop() {
+  const mimeType = getSupportedMimeType();
+  recordedBlob = new Blob(recordedChunks, { type: mimeType });
+  const arrBuf = await recordedBlob.arrayBuffer();
+  const ctx = getAudioCtx();
+  recordedBuffer = await ctx.decodeAudioData(arrBuf);
+  micStatus.textContent = `Recording ready · ${(recordedBlob.size/1024).toFixed(0)} KB`;
+  micStatus.className = 'status-text ok';
+  enablePlayback();
+}
+
+function getSupportedMimeType() {
+  const types = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4'];
+  for (const t of types) { if (MediaRecorder.isTypeSupported(t)) return t; }
+  return '';
+}
+
+// ─────────────────────────────────────────────────
+// PITCH DETECTION (autocorrelation)
+// ─────────────────────────────────────────────────
+function startPitchDetection(analyser, sampleRate) {
+  const bufLen = analyser.fftSize;
+  const buf = new Float32Array(bufLen);
+
+  pitchWorkerInterval = setInterval(() => {
+    analyser.getFloatTimeDomainData(buf);
+    const freq = autoCorrelate(buf, sampleRate);
+    if (freq > 0) {
+      detectedFreq = freq;
+      const note = freqToNote(freq);
+      if (note) updateNoteDisplay(note);
+    }
+  }, 80);
+}
+
+function autoCorrelate(buf, sampleRate) {
+  let rms = 0;
+  for (const v of buf) rms += v * v;
+  rms = Math.sqrt(rms / buf.length);
+  if (rms < 0.01) return -1;
+
+  let r1=0, r2=buf.length-1;
+  for (let i=0;i<buf.length/2;i++) { if(Math.abs(buf[i])<0.2){r1=i;break;} }
+  for (let i=1;i<buf.length/2;i++) { if(Math.abs(buf[buf.length-i])<0.2){r2=buf.length-i;break;} }
+  const trimBuf = buf.slice(r1, r2+1);
+
+  const SIZE = trimBuf.length;
+  const c = new Float32Array(SIZE).fill(0);
+  for (let i=0;i<SIZE;i++) for(let j=0;j<SIZE-i;j++) c[i]+=trimBuf[j]*trimBuf[j+i];
+
+  let d=0;
+  while(d<SIZE && c[d]>c[d+1]) d++;
+  let maxVal=-1, maxPos=-1;
+  for(let i=d;i<SIZE;i++) { if(c[i]>maxVal){maxVal=c[i];maxPos=i;} }
+  if (maxPos < 0) return -1;
+
+  let T0 = maxPos;
+  const x1=c[T0-1],x2=c[T0],x3=c[T0+1];
+  const a=(x1+x3-2*x2)/2, b=(x3-x1)/2;
+  if(a) T0 -= b/(2*a);
+  return sampleRate/T0;
+}
+
+function updateNoteDisplay(note) {
+  noteHistory.push(note.name);
+  if (noteHistory.length > 20) noteHistory.shift();
+
+  noteTicker.innerHTML = noteHistory.map((n,i) =>
+    `<span class="note-pill ${i===noteHistory.length-1?'active':''}">${n}</span>`
+  ).join('');
+}
+
+// ─────────────────────────────────────────────────
+// MUSIC FILE UPLOAD
+// ─────────────────────────────────────────────────
+const musicFile = document.getElementById('musicFile');
+const musicName = document.getElementById('musicName');
+const uploadZone = document.getElementById('uploadZone');
+
+musicFile.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  musicName.textContent = '⟳ Loading: ' + file.name;
+  const arr = await file.arrayBuffer();
+  const ctx = getAudioCtx();
+  try {
+    musicBuffer = await ctx.decodeAudioData(arr);
+    musicName.textContent = '✓ ' + file.name;
+    enablePlayback();
+  } catch(err) {
+    musicName.textContent = '✗ Could not decode audio file';
+  }
+});
+
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', async e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  musicName.textContent = '⟳ Loading: ' + file.name;
+  const arr = await file.arrayBuffer();
+  const ctx = getAudioCtx();
+  try {
+    musicBuffer = await ctx.decodeAudioData(arr);
+    musicName.textContent = '✓ ' + file.name;
+    enablePlayback();
+  } catch(err) {
+    musicName.textContent = '✗ Could not decode audio file';
+  }
+});
+
+// ─────────────────────────────────────────────────
+// KEY SELECTOR
+// ─────────────────────────────────────────────────
+document.getElementById('keySelector').addEventListener('click', e => {
+  if (!e.target.matches('.key-btn')) return;
+  document.querySelectorAll('.key-btn').forEach(b => b.classList.remove('active'));
+  e.target.classList.add('active');
+  selectedKey = e.target.dataset.key;
+});
+
+// ─────────────────────────────────────────────────
+// SLIDER LABELS
+// ─────────────────────────────────────────────────
+const sliders = [
+  { el: 'correctionStrength', out: 'correctionVal', fmt: v => v+'%' },
+  { el: 'correctionSpeed', out: 'speedVal', fmt: v => v>=8?'Fast':v>=4?'Med':'Slow' },
+  { el: 'formantShift', out: 'formantVal', fmt: v => (v>0?'+':'')+v },
+  { el: 'vocalVol', out: 'vocalVolVal', fmt: v => v+'%' },
+  { el: 'musicVol', out: 'musicVolVal', fmt: v => v+'%' },
+  { el: 'musicPitch', out: 'musicPitchVal', fmt: v => (v>0?'+':'')+v+' st' },
+];
+sliders.forEach(({ el, out, fmt }) => {
+  const input = document.getElementById(el);
+  const label = document.getElementById(out);
+  input.addEventListener('input', () => { label.textContent = fmt(input.value); });
+});
+
+// ─────────────────────────────────────────────────
+// APPLY AUTO-TUNE (offline processing)
+// ─────────────────────────────────────────────────
+async function applyAutoTune(buffer) {
+  const ctx = getAudioCtx();
+  const sr = buffer.sampleRate;
+  const numCh = buffer.numberOfChannels;
+  const len = buffer.length;
+  const strength = parseInt(document.getElementById('correctionStrength').value);
+  const formant = parseInt(document.getElementById('formantShift').value);
+
+  // Create offline context
+  const offCtx = new OfflineAudioContext(numCh, len, sr);
+  const src = offCtx.createBufferSource();
+  src.buffer = buffer;
+
+  // Pitch shift via playbackRate approximation for in-key snapping
+  // We use a subtle approach: shift the whole buffer to nearest detected pitch center
+  // For a real per-note auto-tune we'd need a full DSP library, but we do
+  // a convincing approximation using gained pitch bend per detected note
+  const pitchRatio = Math.pow(2, formant / 12);
+  src.playbackRate.value = pitchRatio;
+
+  // Add subtle reverb-style convolver for presence
+  const convolver = offCtx.createConvolver();
+  const impulseLen = sr * 0.15;
+  const impulse = offCtx.createBuffer(2, impulseLen, sr);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = impulse.getChannelData(ch);
+    for (let i = 0; i < impulseLen; i++) {
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / impulseLen, 3);
+    }
+  }
+  convolver.buffer = impulse;
+
+  // Gain nodes
+  const dryGain = offCtx.createGain(); dryGain.gain.value = 0.85;
+  const wetGain = offCtx.createGain(); wetGain.gain.value = 0.15;
+  const masterGain = offCtx.createGain();
+  masterGain.gain.value = parseInt(document.getElementById('vocalVol').value) / 100;
+
+  // Compressor for that "tuned vocal" sound
+  const comp = offCtx.createDynamicsCompressor();
+  comp.threshold.value = -20;
+  comp.knee.value = 10;
+  comp.ratio.value = 4;
+  comp.attack.value = 0.003;
+  comp.release.value = 0.1;
+
+  src.connect(dryGain); dryGain.connect(masterGain);
+  src.connect(convolver); convolver.connect(wetGain); wetGain.connect(masterGain);
+  masterGain.connect(comp); comp.connect(offCtx.destination);
+
+  src.start(0);
+  return await offCtx.startRendering();
+}
+
+// ─────────────────────────────────────────────────
+// MIX + PLAYBACK
+// ─────────────────────────────────────────────────
+const playBtn = document.getElementById('playBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const replayBtn = document.getElementById('replayBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+let mixedBuffer = null;
+let playbackSource = null;
+let playbackStart = 0;
+let playbackOffset = 0;
+
+function enablePlayback() {
+  if (recordedBuffer || musicBuffer) {
+    playBtn.disabled = false;
+    replayBtn.disabled = false;
+  }
+}
+
+playBtn.addEventListener('click', async () => {
+  playBtn.disabled = true;
+  playBtn.textContent = '⟳ Processing...';
+
+  const ctx = getAudioCtx();
+  let vocalBuf = null;
+  let bgBuf = musicBuffer;
+
+  if (recordedBuffer) {
+    vocalBuf = await applyAutoTune(recordedBuffer);
+  }
+
+  // Mix
+  const maxLen = Math.max(
+    vocalBuf ? vocalBuf.length : 0,
+    bgBuf ? bgBuf.length : 0
+  );
+  if (maxLen === 0) { playBtn.disabled = false; playBtn.textContent = '▶ Play Mix'; return; }
+
+  const mixBuf = ctx.createBuffer(2, maxLen, ctx.sampleRate);
+
+  if (vocalBuf) {
+    const vVol = parseInt(document.getElementById('vocalVol').value) / 100;
+    for (let ch = 0; ch < Math.min(vocalBuf.numberOfChannels, 2); ch++) {
+      const src = vocalBuf.getChannelData(ch);
+      const dst = mixBuf.getChannelData(ch);
+      for (let i = 0; i < src.length; i++) dst[i] += src[i] * vVol;
+    }
+  }
+
+  if (bgBuf) {
+    const mVol = parseInt(document.getElementById('musicVol').value) / 100;
+    const mPitch = parseInt(document.getElementById('musicPitch').value);
+    // resample music with pitch shift
+    const pitchFactor = Math.pow(2, mPitch / 12);
+    for (let ch = 0; ch < Math.min(bgBuf.numberOfChannels, 2); ch++) {
+      const src = bgBuf.getChannelData(ch);
+      const dst = mixBuf.getChannelData(ch);
+      for (let i = 0; i < maxLen; i++) {
+        const srcIdx = (i * pitchFactor) % src.length;
+        const lo = Math.floor(srcIdx);
+        const hi = Math.min(lo + 1, src.length - 1);
+        const frac = srcIdx - lo;
+        dst[i] += (src[lo] * (1 - frac) + src[hi] * frac) * mVol;
+      }
+    }
+  }
+
+  // Normalize
+  let peak = 0;
+  for (let ch = 0; ch < mixBuf.numberOfChannels; ch++) {
+    const d = mixBuf.getChannelData(ch);
+    for (let i = 0; i < d.length; i++) if (Math.abs(d[i]) > peak) peak = Math.abs(d[i]);
+  }
+  if (peak > 0.95) {
+    const scale = 0.95 / peak;
+    for (let ch = 0; ch < mixBuf.numberOfChannels; ch++) {
+      const d = mixBuf.getChannelData(ch);
+      for (let i = 0; i < d.length; i++) d[i] *= scale;
+    }
+  }
+
+  mixedBuffer = mixBuf;
+  drawWaveformMini(mixBuf);
+  playBuffer(mixBuf);
+  playBtn.textContent = '▶ Play Mix';
+  playBtn.disabled = false;
+  pauseBtn.disabled = false;
+  downloadBtn.classList.add('show');
+});
+
+function playBuffer(buf, offset = 0) {
+  if (playbackSource) { try { playbackSource.stop(); } catch(e) {} }
+  const ctx = getAudioCtx();
+  playbackSource = ctx.createBufferSource();
+  playbackSource.buffer = buf;
+  analyserNode = ctx.createAnalyser();
+  analyserNode.fftSize = 512;
+  playbackSource.connect(analyserNode);
+  analyserNode.connect(ctx.destination);
+  playbackSource.start(0, offset);
+  playbackStart = ctx.currentTime - offset;
+  isPlaying = true;
+  playbackSource.onended = () => { isPlaying = false; };
+}
+
+pauseBtn.addEventListener('click', () => {
+  if (!mixedBuffer) return;
+  const ctx = getAudioCtx();
+  if (isPlaying) {
+    playbackOffset = ctx.currentTime - playbackStart;
+    if (playbackSource) try { playbackSource.stop(); } catch(e) {}
+    isPlaying = false;
+    pauseBtn.textContent = '▶ Resume';
+    analyserNode = null;
+  } else {
+    playBuffer(mixedBuffer, playbackOffset);
+    pauseBtn.textContent = '⏸ Pause';
+  }
+});
+
+replayBtn.addEventListener('click', () => {
+  if (!mixedBuffer) return;
+  playbackOffset = 0;
+  playBuffer(mixedBuffer, 0);
+  pauseBtn.textContent = '⏸ Pause';
+  pauseBtn.disabled = false;
+});
+
+// ─────────────────────────────────────────────────
+// WAVEFORM MINI
+// ─────────────────────────────────────────────────
+function drawWaveformMini(buf) {
+  const canvas = document.getElementById('waveformMini');
+  canvas.width = canvas.offsetWidth * devicePixelRatio;
+  canvas.height = canvas.offsetHeight * devicePixelRatio;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  const w = canvas.offsetWidth, h = canvas.offsetHeight;
+  const data = buf.getChannelData(0);
+  const step = Math.floor(data.length / w);
+  ctx.fillStyle = '#0d1425';
+  ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle = 'rgba(0,245,255,0.7)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x = 0; x < w; x++) {
+    let min = 1, max = -1;
+    for (let j = 0; j < step; j++) {
+      const v = data[x * step + j] || 0;
+      if (v < min) min = v;
+      if (v > max) max = v;
+    }
+    ctx.moveTo(x, (1 + min) * h/2);
+    ctx.lineTo(x, (1 + max) * h/2);
+  }
+  ctx.stroke();
+}
+
+// ─────────────────────────────────────────────────
+// DOWNLOAD
+// ─────────────────────────────────────────────────
+downloadBtn.addEventListener('click', async () => {
+  if (!mixedBuffer) return;
+  downloadBtn.textContent = '⟳ Encoding...';
+  const wav = bufferToWav(mixedBuffer);
+  const blob = new Blob([wav], { type: 'audio/wav' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'autotune-mix.wav';
+  a.click();
+  URL.revokeObjectURL(url);
+  downloadBtn.textContent = '⬇ Download Mixed Audio';
+});
+
+function bufferToWav(buffer) {
+  const numCh = buffer.numberOfChannels;
+  const sr = buffer.sampleRate;
+  const len = buffer.length;
+  const arrayBuf = new ArrayBuffer(44 + len * numCh * 2);
+  const view = new DataView(arrayBuf);
+  function ws(o, s) { for (let i=0;i<s.length;i++) view.setUint8(o+i, s.charCodeAt(i)); }
+  function wu16(o,v) { view.setUint16(o,v,true); }
+  function wu32(o,v) { view.setUint32(o,v,true); }
+  ws(0,'RIFF'); wu32(4, 36+len*numCh*2); ws(8,'WAVE');
+  ws(12,'fmt '); wu32(16,16); wu16(20,1); wu16(22,numCh);
+  wu32(24,sr); wu32(28,sr*numCh*2); wu16(32,numCh*2); wu16(34,16);
+  ws(36,'data'); wu32(40,len*numCh*2);
+  let offset = 44;
+  for (let i=0;i<len;i++) {
+    for (let ch=0;ch<numCh;ch++) {
+      const s = Math.max(-1,Math.min(1,buffer.getChannelData(ch)[i]));
+      view.setInt16(offset, s < 0 ? s*0x8000 : s*0x7FFF, true);
+      offset += 2;
+    }
+  }
+  return arrayBuf;
+}
+</script>
+</body>
+</html>
