@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoTune Studio</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- ─── Transport Bar (sticky) ─────────────────────────────────────────────── -->
+<div class="transport-bar">
+  <div class="transport-controls">
+    <button class="transport-btn transport-play" id="transportPlay" disabled title="Play / Process Mix">▶</button>
+    <button class="transport-btn"                id="transportPause" disabled title="Pause / Resume">⏸</button>
+    <button class="transport-btn transport-stop" id="transportStop"  disabled title="Stop &amp; Reset">⏹</button>
+  </div>
+
+  <div class="transport-center">
+    <div class="progress-track" id="progressTrack" title="Click to seek">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <span class="transport-time" id="transportTime">--:-- / --:--</span>
+  </div>
+
+  <span class="transport-label" id="transportLabel">No audio ready · Record a vocal or load a music file</span>
+</div>
+
+<!-- ─── Main Container ──────────────────────────────────────────────────────── -->
+<div class="container">
+
+  <header>
+    <div class="logo">AUTOTUNE<span style="color:#fff;font-size:0.5em;vertical-align:middle;margin:0 6px">//</span>STUDIO</div>
+    <div class="tagline">Web Audio · Real-Time Pitch Correction · Browser Native</div>
+  </header>
+
+  <!-- Quick Start Guide ─────────────────────────────────────────────────────── -->
+  <div class="panel panel-guide" id="guidePanel">
+    <div class="panel-title" style="margin-bottom:14px">
+      ★ Quick Start Guide
+      <button class="guide-close" id="guideClose">✕ Hide</button>
+    </div>
+    <div class="guide-steps">
+      <div class="guide-step">
+        <div class="step-num">1</div>
+        <div class="step-text"><strong>Pick a Template</strong><br>Choose a style from the Presets panel below</div>
+      </div>
+      <div class="guide-step">
+        <div class="step-num">2</div>
+        <div class="step-text"><strong>Set Your Key</strong><br>Match the key you're singing in (try C if unsure)</div>
+      </div>
+      <div class="guide-step">
+        <div class="step-num">3</div>
+        <div class="step-text"><strong>Record</strong><br>Click Record → sing or speak → click Stop</div>
+      </div>
+      <div class="guide-step">
+        <div class="step-num">4</div>
+        <div class="step-text"><strong>Add Music</strong> (optional)<br>Drop a background track in Panel 03</div>
+      </div>
+      <div class="guide-step">
+        <div class="step-num">5</div>
+        <div class="step-text"><strong>Play Mix</strong><br>Hit Play Mix or ▶ at the top to hear your result</div>
+      </div>
+    </div>
+    <div class="guide-tip">💡 <strong>Tip:</strong> Not sure which key to pick? Choose C Major — it works for many popular songs. The scale notes shown below the key buttons tell you which notes are in tune for that key.</div>
+  </div>
+
+  <!-- Visualizer ───────────────────────────────────────────────────────────── -->
+  <canvas id="visualizer"></canvas>
+
+  <!-- 00 · Presets & Templates ──────────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-title">
+      00 · Presets &amp; Templates
+      <span class="help-icon" data-tooltip="One-click settings for popular autotune styles. Apply a preset then record — you can still tweak individual sliders after.">?</span>
+    </div>
+    <div class="templates-grid" id="templatesGrid">
+      <!-- Rendered by templates.js -->
+    </div>
+  </div>
+
+  <!-- 01 · Vocal Input ──────────────────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-title">01 · Vocal Input</div>
+
+    <div class="controls-row" style="margin-bottom:12px">
+      <button class="btn btn-danger" id="recordBtn">⬤ Record</button>
+      <button class="btn btn-secondary" id="stopBtn" disabled>■ Stop</button>
+      <div class="rec-indicator" id="recIndicator">
+        <div class="rec-dot"></div> RECORDING
+      </div>
+    </div>
+
+    <!-- Input level meter -->
+    <div class="level-meter-wrap">
+      <span class="level-label">Input Level</span>
+      <div class="level-meter">
+        <div class="level-fill" id="levelFill"></div>
+      </div>
+      <span class="help-icon" data-tooltip="Shows how loud your microphone input is. Keep it mostly in the blue/purple range — if it turns red/pink you may be clipping (too loud).">?</span>
+    </div>
+
+    <div class="status-bar">
+      <span class="status-text" id="micStatus">Click Record to start — make sure your microphone is connected and allowed</span>
+      <span class="timer" id="timer">00:00</span>
+    </div>
+
+    <div class="note-ticker">
+      <div class="note-ticker-inner" id="noteTicker">AWAITING SIGNAL · · ·</div>
+    </div>
+    <div class="note-hint">Live pitch detection — the highlighted note shows what you're singing right now</div>
+  </div>
+
+  <!-- 02 · Pitch Correction Engine ──────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-title">02 · Pitch Correction Engine</div>
+
+    <!-- Key Selector -->
+    <div style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-family:'Orbitron',sans-serif;font-size:0.55rem;letter-spacing:0.2em;color:var(--accent);text-transform:uppercase">Musical Key</span>
+        <span class="help-icon" data-tooltip="Pick the key your song is in. Autotune will snap your pitch to notes in this scale. If you don't know the key, try C — it's the most common for beginners.">?</span>
+      </div>
+      <div class="key-selector" id="keySelector">
+        <button class="key-btn active" data-key="C">C</button>
+        <button class="key-btn" data-key="C#">C#</button>
+        <button class="key-btn" data-key="D">D</button>
+        <button class="key-btn" data-key="D#">D#</button>
+        <button class="key-btn" data-key="E">E</button>
+        <button class="key-btn" data-key="F">F</button>
+        <button class="key-btn" data-key="F#">F#</button>
+        <button class="key-btn" data-key="G">G</button>
+        <button class="key-btn" data-key="G#">G#</button>
+        <button class="key-btn" data-key="A">A</button>
+        <button class="key-btn" data-key="A#">A#</button>
+        <button class="key-btn" data-key="B">B</button>
+      </div>
+      <div class="scale-notes" id="scaleNotes">C Major: C · D · E · F · G · A · B</div>
+    </div>
+
+    <!-- Sliders -->
+    <div class="knob-row">
+      <div class="knob-group">
+        <label>
+          Correction Strength
+          <span class="help-icon" data-tooltip="How aggressively pitch is snapped to the scale. 0% = no effect. 100% = hard snap (robotic Cher/T-Pain sound). Start around 75% for natural pop.">?</span>
+          <span class="val" id="correctionVal">80%</span>
+        </label>
+        <input type="range" id="correctionStrength" min="0" max="100" value="80">
+      </div>
+
+      <div class="knob-group">
+        <label>
+          Correction Speed
+          <span class="help-icon" data-tooltip="How quickly pitch snaps to the target note. Fast = robotic effect (Cher, T-Pain). Slow = smooth, natural glide between notes. Med is a good default.">?</span>
+          <span class="val" id="speedVal">Fast</span>
+        </label>
+        <input type="range" class="pink" id="correctionSpeed" min="1" max="10" value="8">
+      </div>
+
+      <div class="knob-group">
+        <label>
+          Formant Shift
+          <span class="help-icon" data-tooltip="Changes your vocal tone/character without moving pitch. Positive = thinner, higher resonance. Negative = deeper, fuller sound. Leave at 0 to start.">?</span>
+          <span class="val" id="formantVal">0</span>
+        </label>
+        <input type="range" class="purple" id="formantShift" min="-6" max="6" value="0">
+      </div>
+
+      <div class="knob-group">
+        <label>
+          Vocal Volume
+          <span class="help-icon" data-tooltip="Controls how loud your processed vocal is in the final mix. 100% is the default. Raise if vocals feel buried; lower if they're too dominant.">?</span>
+          <span class="val" id="vocalVolVal">100%</span>
+        </label>
+        <input type="range" id="vocalVol" min="0" max="150" value="100">
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 · Background Music ──────────────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-title">
+      03 · Background Music
+      <span style="font-size:0.55rem;color:var(--dim);font-family:'Share Tech Mono',monospace;font-weight:normal;letter-spacing:0.05em">(optional)</span>
+    </div>
+
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="musicFile" accept="audio/*">
+      <div class="upload-icon">♫</div>
+      <div class="upload-text">DROP AUDIO FILE HERE OR CLICK TO BROWSE</div>
+      <div class="upload-text" style="margin-top:4px;font-size:0.65rem">MP3 · WAV · OGG · AAC</div>
+      <div class="upload-name" id="musicName"></div>
+    </div>
+
+    <div class="knob-row" style="margin-top:16px">
+      <div class="knob-group">
+        <label>
+          Music Volume
+          <span class="help-icon" data-tooltip="Balance the background track against your vocal. 60–80% is a typical starting mix. Raise if music is too quiet; lower if it drowns your voice.">?</span>
+          <span class="val" id="musicVolVal">70%</span>
+        </label>
+        <input type="range" class="purple" id="musicVol" min="0" max="150" value="70">
+      </div>
+
+      <div class="knob-group">
+        <label>
+          Music Pitch Shift
+          <span class="help-icon" data-tooltip="Shifts the background track's pitch up or down by semitones. Use this to match the music's key to your vocal without reprocessing the audio.">?</span>
+          <span class="val" id="musicPitchVal">0 st</span>
+        </label>
+        <input type="range" class="pink" id="musicPitch" min="-12" max="12" value="0">
+      </div>
+    </div>
+  </div>
+
+  <!-- 04 · Playback & Mix ────────────────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-title">04 · Playback &amp; Mix</div>
+
+    <div class="playback-row">
+      <button class="btn btn-primary shimmer" id="playBtn" disabled>▶ Play Mix</button>
+      <button class="btn btn-secondary" id="pauseBtn"  disabled>⏸ Pause</button>
+      <button class="btn btn-secondary" id="replayBtn" disabled>↺ Restart</button>
+      <canvas class="waveform-mini" id="waveformMini"></canvas>
+    </div>
+
+    <button class="btn btn-purple shimmer" id="downloadBtn">⬇ Download Mixed Audio</button>
+  </div>
+
+</div><!-- /container -->
+
+<!-- Scripts — order matters: state → utils → templates → visualizer → recorder → engine → ui -->
+<script src="js/state.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/templates.js"></script>
+<script src="js/visualizer.js"></script>
+<script src="js/recorder.js"></script>
+<script src="js/audio-engine.js"></script>
+<script src="js/ui.js"></script>
+
+</body>
+</html>
