@@ -9,6 +9,7 @@ let recordedBlob    = null;   // Final blob after recording stops
 let recordedBuffer  = null;   // Decoded AudioBuffer from recording
 let musicBuffer     = null;   // Decoded AudioBuffer from uploaded music file
 let mixedBuffer     = null;   // Final mixed AudioBuffer (vocal + music)
+let pendingBuffer   = null;   // Background-processed buffer waiting to replace mixedBuffer
 
 let analyserNode        = null;   // AnalyserNode (shared: recording & playback)
 let playbackSource      = null;   // Current BufferSourceNode during playback
