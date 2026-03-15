@@ -24,12 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (input && output) {
       input.addEventListener('input', () => {
         output.textContent = fmt(input.value);
-        // Invalidate cached mix so next play reprocesses with updated settings
-        if (mixedBuffer) {
-          mixedBuffer = null;
-          setTransportLabel('Settings changed — click ▶ to reprocess');
-          updateTransportUI();
-        }
+        scheduleBackgroundProcess();
       });
     }
   });
@@ -50,12 +45,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Transport Bar (sticky top) ──────────────────────────────────────────────
   document.getElementById('transportPlay').addEventListener('click', () => {
-    if (mixedBuffer) {
-      // Mix already processed — just play/resume
-      if (!isPlaying) playBuffer(mixedBuffer, playbackOffset);
-    } else {
-      // No mix yet — kick off full processing
+    if (pendingBuffer || !mixedBuffer) {
+      // New settings pending or no mix yet — process and play
       mixAndPlay();
+    } else if (!isPlaying) {
+      // Mix is current, just resume
+      playBuffer(mixedBuffer, playbackOffset);
     }
   });
 

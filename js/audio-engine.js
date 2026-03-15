@@ -1,5 +1,16 @@
 // ─── Audio Processing, Playback & Transport ──────────────────────────────────
 
+// ─── Spinner helpers ──────────────────────────────────────────────────────────
+function showProcessingSpinner() {
+  const el = document.getElementById('transportSpinner');
+  if (el) el.classList.add('active');
+}
+
+function hideProcessingSpinner() {
+  const el = document.getElementById('transportSpinner');
+  if (el) el.classList.remove('active');
+}
+
 // ─── AutoTune Processing (offline, non-blocking) ─────────────────────────────
 async function applyAutoTune(buffer) {
   const ctx      = getAudioCtx();
@@ -49,13 +60,8 @@ async function applyAutoTune(buffer) {
   return offCtx.startRendering();
 }
 
-// ─── Mix & Play (the main "Play Mix" button) ──────────────────────────────────
-async function mixAndPlay() {
-  const playBtn = document.getElementById('playBtn');
-  playBtn.disabled    = true;
-  playBtn.textContent = '⟳ Processing...';
-  setTransportLabel('Processing audio — please wait...');
-
+// ─── Build a mixed AudioBuffer from current settings ──────────────────────────
+async function buildMixBuffer() {
   const ctx   = getAudioCtx();
   const bgBuf = musicBuffer;
   let vocalBuf = null;
@@ -69,12 +75,7 @@ async function mixAndPlay() {
     bgBuf    ? bgBuf.length    : 0,
   );
 
-  if (maxLen === 0) {
-    playBtn.disabled    = false;
-    playBtn.textContent = '▶ Play Mix';
-    setTransportLabel('Nothing to play — record a vocal or load music');
-    return;
-  }
+  if (maxLen === 0) return null;
 
   const mixBuf = ctx.createBuffer(2, maxLen, ctx.sampleRate);
 
@@ -121,7 +122,69 @@ async function mixAndPlay() {
     }
   }
 
-  mixedBuffer = mixBuf;
+  return mixBuf;
+}
+
+// ─── Background debounced processing ──────────────────────────────────────────
+// Called whenever settings or templates change. Processes in background so the
+// currently playing audio is never interrupted. Shows a spinner while working.
+let _bgVersion  = 0;
+let _bgDebounce = null;
+
+function scheduleBackgroundProcess() {
+  if (!recordedBuffer && !musicBuffer) return;
+  showProcessingSpinner();
+  clearTimeout(_bgDebounce);
+  const version = ++_bgVersion;
+
+  _bgDebounce = setTimeout(async () => {
+    try {
+      const buf = await buildMixBuffer();
+      if (version !== _bgVersion) return; // superseded by a newer call
+
+      pendingBuffer = buf;
+
+      // If not currently playing, apply the new buffer immediately
+      if (!isPlaying && buf) {
+        mixedBuffer = buf;
+        pendingBuffer = null;
+        drawWaveformMini(mixedBuffer);
+        document.getElementById('downloadBtn').classList.add('show');
+        updateTransportUI();
+      }
+
+      setTransportLabel(isPlaying ? 'Playing · New settings ready on next play' : (buf ? 'Ready · Settings applied' : 'No audio ready'));
+    } catch (e) {
+      console.warn('Background processing error:', e);
+      if (version === _bgVersion) setTransportLabel('Processing error — try again');
+    } finally {
+      if (version === _bgVersion) hideProcessingSpinner();
+    }
+  }, 600);
+}
+
+// ─── Mix & Play (the main "Play Mix" button) ──────────────────────────────────
+async function mixAndPlay() {
+  const playBtn = document.getElementById('playBtn');
+  playBtn.disabled    = true;
+  playBtn.textContent = '⟳ Processing...';
+
+  // Use already-processed pending buffer if available, else build fresh
+  let mixBuf = pendingBuffer || mixedBuffer;
+  if (!mixBuf) {
+    setTransportLabel('Processing audio — please wait...');
+    mixBuf = await buildMixBuffer();
+  }
+
+  if (!mixBuf) {
+    playBtn.disabled    = false;
+    playBtn.textContent = '▶ Play Mix';
+    setTransportLabel('Nothing to play — record a vocal or load music');
+    return;
+  }
+
+  pendingBuffer  = null;
+  mixedBuffer    = mixBuf;
   drawWaveformMini(mixBuf);
   playbackOffset = 0;
   playBuffer(mixBuf, 0);
@@ -162,6 +225,15 @@ function playBuffer(buf, offset = 0) {
       playbackOffset = 0;
       clearInterval(progressInterval);
       analyserNode = null;
+
+      // If a pending buffer arrived while we were playing, apply it now
+      if (pendingBuffer) {
+        mixedBuffer   = pendingBuffer;
+        pendingBuffer = null;
+        drawWaveformMini(mixedBuffer);
+        setTransportLabel('Ready · Settings applied');
+      }
+
       updatePlaybackButtonUI();
       updateTransportUI();
       updateProgressBar(0);
@@ -206,6 +278,14 @@ function stopPlayback() {
   playbackOffset = 0;
   clearInterval(progressInterval);
   analyserNode = null;
+
+  // Apply any pending buffer now that we've stopped
+  if (pendingBuffer) {
+    mixedBuffer   = pendingBuffer;
+    pendingBuffer = null;
+    drawWaveformMini(mixedBuffer);
+    setTransportLabel('Ready · Settings applied');
+  }
 
   const pauseBtn = document.getElementById('pauseBtn');
   if (pauseBtn) pauseBtn.textContent = '⏸ Pause';

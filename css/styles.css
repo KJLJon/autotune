@@ -37,8 +37,10 @@ body::before {
 
 /* ─── Transport Bar ─────────────────────────────── */
 .transport-bar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
   background: rgba(5, 8, 16, 0.95);
   backdrop-filter: blur(12px);
@@ -147,12 +149,38 @@ body::before {
   text-overflow: ellipsis;
 }
 
+.transport-spinner {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6rem;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.transport-spinner.active { opacity: 1; }
+
+.spinner-ring {
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(0,245,255,0.2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* ─── Container ─────────────────────────────────── */
 .container {
   position: relative;
   z-index: 1;
   max-width: 860px;
-  margin: 0 auto;
+  margin: 62px auto 0;
   padding: 30px 20px 60px;
 }
 
