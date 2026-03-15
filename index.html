@@ -109,6 +109,39 @@
       <div class="note-ticker-inner" id="noteTicker">AWAITING SIGNAL · · ·</div>
     </div>
     <div class="note-hint">Live pitch detection — the highlighted note shows what you're singing right now</div>
+
+    <!-- Pitch Coach ──────────────────────────────────────────── -->
+    <div class="pitch-coach">
+      <div class="pitch-coach-header">
+        <span>PITCH COACH</span>
+        <span class="help-icon" data-tooltip="Real-time feedback while you sing. The needle shows how flat or sharp you are relative to the nearest note in your selected key. Green = in key, yellow = slightly off, red = off.">?</span>
+        <span class="pitch-coach-status" id="pitchCoachStatus">— awaiting signal —</span>
+      </div>
+      <div class="pitch-coach-display">
+        <div class="pitch-target">
+          <span class="pitch-target-label">TARGET</span>
+          <span class="pitch-target-note" id="pitchTargetNote">—</span>
+        </div>
+        <div class="pitch-cents-area">
+          <div class="pitch-cents-bar-wrap">
+            <span class="pitch-cents-label">FLAT</span>
+            <div class="pitch-cents-bar">
+              <div class="pitch-cents-center"></div>
+              <div class="pitch-cents-needle" id="pitchCentsNeedle"></div>
+            </div>
+            <span class="pitch-cents-label">SHARP</span>
+          </div>
+          <div class="pitch-cents-value" id="pitchCentsValue">0¢</div>
+        </div>
+        <div class="pitch-inkey" id="pitchInKey">—</div>
+      </div>
+    </div>
+
+    <!-- Post-recording pitch summary ────────────────────────── -->
+    <div class="pitch-summary" id="pitchSummary" style="display:none">
+      <div class="pitch-summary-title">SESSION SUMMARY</div>
+      <div id="pitchSummaryContent"></div>
+    </div>
   </div>
 
   <!-- 02 · Pitch Correction Engine ──────────────────────────────────────────── -->

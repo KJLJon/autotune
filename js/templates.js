@@ -137,6 +137,13 @@ function applyTemplate(id) {
 
   activeTemplate = id;
   showToast(`${t.emoji} ${t.name} applied — ${t.tip}`);
+
+  // Invalidate cached mix so the next play reprocesses with new settings
+  if (mixedBuffer) {
+    mixedBuffer = null;
+    setTransportLabel('Template changed — click ▶ to reprocess');
+    updateTransportUI();
+  }
 }
 
 // ─── Toast Notification ───────────────────────────────────────────────────────

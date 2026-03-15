@@ -803,6 +803,222 @@ input[type=range].purple::-webkit-slider-thumb {
 }
 #downloadBtn.show { display: block; }
 
+/* ─── Pitch Coach ────────────────────────────────── */
+.pitch-coach {
+  margin-top: 14px;
+  background: var(--surface);
+  border: 1px solid rgba(0,245,255,0.1);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.pitch-coach-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  color: var(--dim);
+  margin-bottom: 10px;
+}
+
+.pitch-coach-status {
+  margin-left: auto;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  color: var(--dim);
+  transition: color 0.2s;
+}
+
+.pitch-coach-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pitch-target {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 48px;
+}
+
+.pitch-target-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.5rem;
+  color: var(--dim);
+  letter-spacing: 0.15em;
+}
+
+.pitch-target-note {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.pitch-cents-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pitch-cents-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pitch-cents-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.5rem;
+  color: var(--dim);
+  letter-spacing: 0.05em;
+  min-width: 30px;
+}
+.pitch-cents-label:last-child { text-align: right; }
+
+.pitch-cents-bar {
+  flex: 1;
+  height: 10px;
+  background: var(--panel);
+  border-radius: 5px;
+  border: 1px solid rgba(0,245,255,0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.pitch-cents-center {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(0,245,255,0.25);
+  transform: translateX(-50%);
+}
+
+.pitch-cents-needle {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: 6px;
+  border-radius: 3px;
+  background: var(--accent);
+  left: 50%;
+  transform: translateX(-50%);
+  transition: left 0.1s ease-out, background 0.15s;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.pitch-cents-value {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.6rem;
+  text-align: center;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+}
+
+.pitch-inkey {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 700;
+  min-width: 76px;
+  text-align: center;
+  padding: 5px 8px;
+  border-radius: 5px;
+  letter-spacing: 0.07em;
+  border: 1px solid rgba(0,245,255,0.15);
+  color: var(--dim);
+}
+
+.pitch-inkey.in-key {
+  color: var(--accent-teal);
+  background: rgba(0,229,160,0.1);
+  border-color: rgba(0,229,160,0.3);
+}
+
+.pitch-inkey.near-key {
+  color: #ffd700;
+  background: rgba(255,215,0,0.08);
+  border-color: rgba(255,215,0,0.25);
+}
+
+.pitch-inkey.off-key {
+  color: var(--accent2);
+  background: rgba(255,45,120,0.08);
+  border-color: rgba(255,45,120,0.25);
+}
+
+/* ─── Pitch Summary ──────────────────────────────── */
+.pitch-summary {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: rgba(0,229,160,0.04);
+  border: 1px solid rgba(0,229,160,0.18);
+  border-radius: 8px;
+}
+
+.pitch-summary-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.55rem;
+  letter-spacing: 0.22em;
+  color: var(--accent-teal);
+  margin-bottom: 8px;
+}
+
+.pitch-summary-stat {
+  font-size: 0.68rem;
+  color: var(--text);
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+.pitch-summary-accent { color: var(--accent-teal); font-weight: 700; }
+
+.pitch-summary-tip {
+  font-size: 0.65rem;
+  color: var(--dim);
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-left: 2px solid var(--accent-teal);
+  border-radius: 0 4px 4px 0;
+  line-height: 1.5;
+}
+
+.pitch-rec-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.pitch-rec-btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 5px;
+  border: 1px solid rgba(0,229,160,0.35);
+  background: rgba(0,229,160,0.07);
+  color: var(--accent-teal);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-transform: uppercase;
+}
+
+.pitch-rec-btn:hover {
+  background: rgba(0,229,160,0.15);
+  border-color: var(--accent-teal);
+  box-shadow: 0 0 12px rgba(0,229,160,0.2);
+}
+
 /* ─── Shimmer ────────────────────────────────────── */
 .shimmer { position: relative; overflow: hidden; }
 .shimmer::after {

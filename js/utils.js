@@ -18,6 +18,29 @@ function freqToNote(freq) {
   return { name: noteName, midi: Math.round(midi), cents };
 }
 
+// Returns { target (note name), centsOff, inKey } for real-time pitch coaching.
+// centsOff > 0 = sharp relative to target, < 0 = flat.
+function getPitchDeviation(freq, key) {
+  if (!freq || freq < 50) return null;
+  const midi = 69 + 12 * Math.log2(freq / 440);
+  const noteClassFrac = ((midi % 12) + 12) % 12; // 0–11.999, fractional position in octave
+  const scaleIndices  = getScaleNotes(key).map(n => NOTE_NAMES.indexOf(n));
+
+  let bestNote = null, bestCents = Infinity;
+  for (const idx of scaleIndices) {
+    let diff = noteClassFrac - idx;
+    if (diff >  6) diff -= 12;
+    if (diff < -6) diff += 12;
+    const cents = diff * 100;
+    if (Math.abs(cents) < Math.abs(bestCents)) {
+      bestCents = cents;
+      bestNote  = NOTE_NAMES[idx];
+    }
+  }
+
+  return { target: bestNote, centsOff: Math.round(bestCents), inKey: Math.abs(bestCents) < 25 };
+}
+
 // Returns a frequency snapped toward the nearest scale note
 // strength 0–100: 0 = unchanged, 100 = hard snap
 function snapToScale(freq, key, strength) {
