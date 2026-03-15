@@ -25,3 +25,4 @@ let selectedKey   = 'C';     // Currently selected musical key
 let noteHistory   = [];      // Last 20 detected note names for the ticker
 let detectedFreq  = 0;       // Most recently detected frequency (Hz)
 let activeTemplate = null;   // ID of the last applied template preset
+let pitchSamples  = [];      // Pitch deviation samples collected during recording

@@ -22,7 +22,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const input  = document.getElementById(el);
     const output = document.getElementById(out);
     if (input && output) {
-      input.addEventListener('input', () => { output.textContent = fmt(input.value); });
+      input.addEventListener('input', () => {
+        output.textContent = fmt(input.value);
+        // Invalidate cached mix so next play reprocesses with updated settings
+        if (mixedBuffer) {
+          mixedBuffer = null;
+          setTransportLabel('Settings changed — click ▶ to reprocess');
+          updateTransportUI();
+        }
+      });
     }
   });
 

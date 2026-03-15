@@ -5,6 +5,71 @@ function initRecorder() {
   document.getElementById('stopBtn').addEventListener('click', stopRecording);
 }
 
+// ─── Pitch Coach UI ───────────────────────────────────────────────────────────
+function updatePitchCoach(dev) {
+  const statusEl = document.getElementById('pitchCoachStatus');
+  const targetEl = document.getElementById('pitchTargetNote');
+  const needleEl = document.getElementById('pitchCentsNeedle');
+  const centsEl  = document.getElementById('pitchCentsValue');
+  const inKeyEl  = document.getElementById('pitchInKey');
+  if (!targetEl) return;
+
+  targetEl.textContent = dev.target;
+  centsEl.textContent  = (dev.centsOff > 0 ? '+' : '') + dev.centsOff + '¢';
+
+  // Position needle (clamp ±50 cents → 0–100%)
+  const pct = (Math.max(-50, Math.min(50, dev.centsOff)) + 50);
+  needleEl.style.left = pct + '%';
+
+  const abs = Math.abs(dev.centsOff);
+  if (abs < 20) {
+    needleEl.style.background = '#00e5a0';
+    inKeyEl.className  = 'pitch-inkey in-key';
+    inKeyEl.textContent = '✓ IN KEY';
+    statusEl.textContent = 'Great pitch!';
+  } else if (abs < 40) {
+    needleEl.style.background = '#ffd700';
+    inKeyEl.className  = 'pitch-inkey near-key';
+    inKeyEl.textContent = dev.centsOff < 0 ? '▼ FLAT' : '▲ SHARP';
+    statusEl.textContent = dev.centsOff < 0 ? 'Slightly flat — raise your pitch' : 'Slightly sharp — lower your pitch';
+  } else {
+    needleEl.style.background = '#ff2d78';
+    inKeyEl.className  = 'pitch-inkey off-key';
+    inKeyEl.textContent = dev.centsOff < 0 ? '▼▼ TOO FLAT' : '▲▲ TOO SHARP';
+    statusEl.textContent = dev.centsOff < 0 ? 'Too flat — raise your pitch' : 'Too sharp — lower your pitch';
+  }
+}
+
+function showPitchSummary() {
+  const summaryEl = document.getElementById('pitchSummary');
+  const contentEl = document.getElementById('pitchSummaryContent');
+  if (!summaryEl || !contentEl || pitchSamples.length < 5) return;
+
+  const inKeyCount = pitchSamples.filter(s => s.inKey).length;
+  const pct        = Math.round(inKeyCount / pitchSamples.length * 100);
+
+  const noteCounts = {};
+  pitchSamples.forEach(s => { noteCounts[s.target] = (noteCounts[s.target] || 0) + 1; });
+  const topNotes = Object.entries(noteCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([n]) => n)
+    .join(', ');
+
+  let tip;
+  if (pct >= 80)      tip = 'Great control! Try "Natural Fix" or "Pop Smooth" — your pitch barely needs heavy correction.';
+  else if (pct >= 60) tip = 'Good effort! Try "Pop Smooth" or "Cher Effect" — autotune will clean up the rest.';
+  else if (pct >= 40) tip = 'Keep at it! Hum the melody first to find the notes. "T-Pain" or "Cher Effect" templates handle strong pitch errors well.';
+  else                tip = 'No worries — that\'s exactly what autotune is for! Try "Cher Effect" or "Robot Voice" — they work great even with rough pitch.';
+
+  contentEl.innerHTML = `
+    <div class="pitch-summary-stat"><span class="pitch-summary-accent">${pct}%</span> of pitches landed in ${selectedKey} major</div>
+    <div class="pitch-summary-stat">Most-targeted notes: <span class="pitch-summary-accent">${topNotes}</span></div>
+    <div class="pitch-summary-tip">💡 ${tip}</div>
+  `;
+  summaryEl.style.display = 'block';
+}
+
 // ─── Start Recording ──────────────────────────────────────────────────────────
 async function startRecording() {
   const recordBtn   = document.getElementById('recordBtn');
@@ -23,6 +88,9 @@ async function startRecording() {
     analyserNode.fftSize = 2048;
     source.connect(analyserNode);
 
+    pitchSamples = [];
+    const summaryEl = document.getElementById('pitchSummary');
+    if (summaryEl) summaryEl.style.display = 'none';
     startPitchDetection(analyserNode, ctx.sampleRate);
 
     // MediaRecorder
@@ -72,6 +140,20 @@ function stopRecordingUI() {
   if (levelFill) levelFill.style.width = '0%';
 
   analyserNode = null;
+
+  // Reset pitch coach display and show summary
+  const statusEl = document.getElementById('pitchCoachStatus');
+  if (statusEl) statusEl.textContent = '— awaiting signal —';
+  const targetEl = document.getElementById('pitchTargetNote');
+  if (targetEl) targetEl.textContent = '—';
+  const centsEl = document.getElementById('pitchCentsValue');
+  if (centsEl) centsEl.textContent = '0¢';
+  const needleEl = document.getElementById('pitchCentsNeedle');
+  if (needleEl) { needleEl.style.left = '50%'; needleEl.style.background = 'var(--accent)'; }
+  const inKeyEl = document.getElementById('pitchInKey');
+  if (inKeyEl) { inKeyEl.className = 'pitch-inkey'; inKeyEl.textContent = '—'; }
+
+  showPitchSummary();
 }
 
 // Called by MediaRecorder when all chunks are available
@@ -119,6 +201,12 @@ function startPitchDetection(analyser, sampleRate) {
       detectedFreq = freq;
       const note = freqToNote(freq);
       if (note) updateNoteDisplay(note);
+      const dev = getPitchDeviation(freq, selectedKey);
+      if (dev) {
+        updatePitchCoach(dev);
+        pitchSamples.push(dev);
+        if (pitchSamples.length > 600) pitchSamples.shift(); // ~48s max
+      }
     }
   }, 80);
 }
