@@ -56,16 +56,31 @@ function showPitchSummary() {
     .map(([n]) => n)
     .join(', ');
 
-  let tip;
-  if (pct >= 80)      tip = 'Great control! Try "Natural Fix" or "Pop Smooth" — your pitch barely needs heavy correction.';
-  else if (pct >= 60) tip = 'Good effort! Try "Pop Smooth" or "Cher Effect" — autotune will clean up the rest.';
-  else if (pct >= 40) tip = 'Keep at it! Hum the melody first to find the notes. "T-Pain" or "Cher Effect" templates handle strong pitch errors well.';
-  else                tip = 'No worries — that\'s exactly what autotune is for! Try "Cher Effect" or "Robot Voice" — they work great even with rough pitch.';
+  // Recommendations keyed by accuracy tier — both IDs must exist in TEMPLATES
+  let tip, recs;
+  if (pct >= 80) {
+    tip  = 'Your pitch is solid! Light correction will keep it sounding natural.';
+    recs = [{ id: 'natural', label: '🎤 Natural Fix' }, { id: 'popsmooth', label: '✨ Pop Smooth' }];
+  } else if (pct >= 60) {
+    tip  = 'Good effort — a medium correction template will polish up the rough spots.';
+    recs = [{ id: 'popsmooth', label: '✨ Pop Smooth' }, { id: 'heavypop', label: '💫 Heavy Pop' }];
+  } else if (pct >= 40) {
+    tip  = 'Hard correction will snap your pitch in place. Hum the melody once before re-recording for better results.';
+    recs = [{ id: 'cher', label: '🌟 Cher Effect' }, { id: 'tpain', label: '🎵 T-Pain' }];
+  } else {
+    tip  = 'No worries — max correction is exactly what autotune is for. These templates thrive on rough pitch.';
+    recs = [{ id: 'cher', label: '🌟 Cher Effect' }, { id: 'robot', label: '🤖 Robot Voice' }];
+  }
+
+  const recButtons = recs.map(r =>
+    `<button class="pitch-rec-btn" onclick="applyTemplate('${r.id}')">${r.label}</button>`
+  ).join('');
 
   contentEl.innerHTML = `
     <div class="pitch-summary-stat"><span class="pitch-summary-accent">${pct}%</span> of pitches landed in ${selectedKey} major</div>
     <div class="pitch-summary-stat">Most-targeted notes: <span class="pitch-summary-accent">${topNotes}</span></div>
     <div class="pitch-summary-tip">💡 ${tip}</div>
+    <div class="pitch-rec-row">${recButtons}</div>
   `;
   summaryEl.style.display = 'block';
 }

@@ -991,6 +991,34 @@ input[type=range].purple::-webkit-slider-thumb {
   line-height: 1.5;
 }
 
+.pitch-rec-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.pitch-rec-btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 5px;
+  border: 1px solid rgba(0,229,160,0.35);
+  background: rgba(0,229,160,0.07);
+  color: var(--accent-teal);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-transform: uppercase;
+}
+
+.pitch-rec-btn:hover {
+  background: rgba(0,229,160,0.15);
+  border-color: var(--accent-teal);
+  box-shadow: 0 0 12px rgba(0,229,160,0.2);
+}
+
 /* ─── Shimmer ────────────────────────────────────── */
 .shimmer { position: relative; overflow: hidden; }
 .shimmer::after {
